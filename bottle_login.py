@@ -31,6 +31,8 @@ class BottleSession(dict):
             value = dict(self.items())
             value = json.dumps(value, indent=None, separators=(',', ':'))
             value = self.encrypt(value)
+            if not isinstance(value, str):
+                value = value.encode(self.encoding)
             set_cookie(self.key, value, **self.params)
 
     def load(self, cookies, **kwargs):
