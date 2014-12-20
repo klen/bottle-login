@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 class BottleSession(dict):
 
+    encoding = 'UTF-8'
+
     def __init__(self, secret, key='session.id', **params):
         self.secret = secret
         self.key = key
@@ -42,23 +44,23 @@ class BottleSession(dict):
         self.update(self.store)
 
     def create_signature(self, value, timestamp):
-        h = hmac.new(self.secret, digestmod=hashlib.sha1)
+        h = hmac.new(self.secret.encode(), digestmod=hashlib.sha1)
         h.update(timestamp)
         h.update(value)
         return h.hexdigest()
 
     def encrypt(self, value):
-        timestamp = str(int(time.time()))
-        value = base64.b64encode(value)
+        timestamp = str(int(time.time())).encode()
+        value = base64.b64encode(value.encode(self.encoding))
         signature = self.create_signature(value, timestamp)
-        return "|".join([value, timestamp, signature])
+        return "|".join([value.decode(self.encoding), timestamp.decode(self.encoding), signature])
 
     def decrypt(self, value):
         value, timestamp, signature = value.split("|")
-        check = self.create_signature(value, timestamp)
+        check = self.create_signature(value.encode(self.encoding), timestamp.encode())
         if check != signature:
             return None
-        return base64.b64decode(value)
+        return base64.b64decode(value).decode(self.encoding)
 
 
 class LoginPlugin(object):
